@@ -5,7 +5,7 @@ FROM oven/bun:1 AS base
 WORKDIR /app
 
 # Copy package files and install dependencies
-COPY bun.lockb package.json ./
+COPY bun.lock package.json ./
 RUN bun install --frozen-lockfile
 
 # Copy the rest of the application code
