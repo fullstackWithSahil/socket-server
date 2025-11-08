@@ -1,64 +1,78 @@
 import { Server, Socket } from "socket.io";
 import http from 'http';
 import axios from "axios";
+
 const server = http.createServer();
-const io = new Server(server,{
+const io = new Server(server, {
     cors: {
-		origin:"*",
-	},
+        origin: "*",
+        methods: ["GET", "POST"],
+        credentials: true
+    },
 });
 
-const bannedUsers:any = {};
-const adminUsers:any ={};
+const bannedUsers: any = {};
+const adminUsers: any = {};
 
 io.on("connection", (socket: Socket): void => {
-	console.log("a user connected");
+    console.log("a user connected");
 
-	socket.on("joinRoom", (chat) => {
-		socket.join(chat.chat);
-		if(!bannedUsers[chat.teacher]){
-			axios.get(
-				`${process.env.WORKER_URL}/public/user/banned/teacher/${chat.teacher}`
-			).then(({data})=>{
-				const users = data.data.map((user:{userId:string})=>user.userId);
-				bannedUsers[chat.teacher] = users;
-			});
-		}
-		if(!adminUsers[chat.teacher]){
-			axios.get(
-				`${process.env.WORKER_URL}/public/user/admin/teacher/${chat.teacher}`,
-			).then(({data})=>{
-				const users = data.data.map((user:{id:string})=>user.id);
-				adminUsers[chat.teacher] = users;
-			});
-		}
-	});
+    socket.on("joinRoom", (chat) => {
+        socket.join(chat.chat);
+        if (!bannedUsers[chat.teacher]) {
+            axios.get(
+                `${process.env.WORKER_URL}/public/user/banned/teacher/${chat.teacher}`
+            ).then(({ data }) => {
+                const users = data.data.map((user: { userId: string }) => user.userId);
+                bannedUsers[chat.teacher] = users;
+            }).catch((error) => {
+                console.error("Error fetching banned users:", error);
+            });
+        }
+        if (!adminUsers[chat.teacher]) {
+            axios.get(
+                `${process.env.WORKER_URL}/public/user/admin/teacher/${chat.teacher}`,
+            ).then(({ data }) => {
+                const users = data.data.map((user: { id: string }) => user.id);
+                adminUsers[chat.teacher] = users;
+            }).catch((error) => {
+                console.error("Error fetching admin users:", error);
+            });
+        }
+    });
 
-	socket.on("addReaction",(reaction)=>{
-		io.to(reaction.chatId).emit("sendReaction",reaction);
-	})
+    socket.on("addReaction", (reaction) => {
+        io.to(reaction.chatId).emit("sendReaction", reaction);
+    });
 
-	socket.on("sendMessage", (message) => {
-		if(
-			bannedUsers[message.teacher] && 
-			bannedUsers[message.teacher].includes(message.senderId)
-		){
-			return;
-		}
-		io.to(message.chatId).emit("receiveMessage", message);
-	});
-	
-	socket.on("editMessage", (message) => {
-		io.to(message.chatId).emit("receiveEditMessage", message);
-	});
+    socket.on("sendMessage", (message) => {
+        if (
+            bannedUsers[message.teacher] &&
+            bannedUsers[message.teacher].includes(message.senderId)
+        ) {
+            return;
+        }
+        io.to(message.chatId).emit("receiveMessage", message);
+    });
 
-	socket.on("deleteMessage", (message) => {
-		io.to(message.chatId).emit("receiveDeleteMessage", message.id);
-	});
+    socket.on("editMessage", (message) => {
+        io.to(message.chatId).emit("receiveEditMessage", message);
+    });
+
+    socket.on("deleteMessage", (message) => {
+        io.to(message.chatId).emit("receiveDeleteMessage", message.id);
+    });
 
     socket.on("leaveRoom", (chat) => {
         socket.leave(chat);
     });
+
+    socket.on("disconnect", () => {
+        console.log("user disconnected");
+    });
 });
 
-io.listen(8080);
+const PORT = process.env.PORT || 8080;
+server.listen(PORT, () => {
+    console.log(`Socket.IO server listening on port ${PORT}`);
+});
