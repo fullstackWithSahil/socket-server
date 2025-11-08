@@ -34,6 +34,10 @@ io.on("connection", (socket: Socket): void => {
 		}
 	});
 
+	socket.on("addReaction",(reaction)=>{
+		io.to(reaction.chatId).emit("sendReaction",reaction);
+	})
+
 	socket.on("sendMessage", (message) => {
 		if(
 			bannedUsers[message.teacher] && 
