@@ -21,7 +21,7 @@ io.on("connection", (socket: Socket): void => {
         socket.join(chat.chat);
         if (!bannedUsers[chat.teacher]) {
             axios.get(
-                `${process.env.WORKER_URL}/public/user/banned/teacher/${chat.teacher}`
+                `https://chat.fullstackwithsahil.workers.dev/public/user/banned/teacher/${chat.teacher}`
             ).then(({ data }) => {
                 const users = data.data.map((user: { userId: string }) => user.userId);
                 bannedUsers[chat.teacher] = users;
@@ -31,7 +31,7 @@ io.on("connection", (socket: Socket): void => {
         }
         if (!adminUsers[chat.teacher]) {
             axios.get(
-                `${process.env.WORKER_URL}/public/user/admin/teacher/${chat.teacher}`,
+                `https://chat.fullstackwithsahil.workers.dev/public/user/admin/teacher/${chat.teacher}`,
             ).then(({ data }) => {
                 const users = data.data.map((user: { id: string }) => user.id);
                 adminUsers[chat.teacher] = users;
@@ -72,7 +72,7 @@ io.on("connection", (socket: Socket): void => {
     });
 });
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
     console.log(`Socket.IO server listening on port ${PORT}`);
 });
