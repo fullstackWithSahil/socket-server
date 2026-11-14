@@ -1,19 +1,14 @@
 
-FROM oven/bun:1
+FROM node:22-alpine
 
 WORKDIR /app
 
-# Copy dependency files first for better layer caching
-COPY package.json bun.lock ./
+COPY package.json ./
 
-# Install dependencies
-RUN bun install --frozen-lockfile
+RUN npm install
 
-# Copy application source
 COPY . .
 
-# Expose application port
 EXPOSE 10000
 
-# Start the application
-CMD ["bun", "run", "src/index.ts"]
+CMD ["npx", "tsx", "src/index.ts"]
