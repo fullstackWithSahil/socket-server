@@ -3,12 +3,17 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-COPY package.json ./
+# Copy package files
+COPY package*.json ./
 
-RUN npm install
+# Install production dependencies
+RUN npm ci --omit=dev
 
+# Copy application
 COPY . .
 
-EXPOSE 10000
+# Expose Socket.IO port
+EXPOSE 1000
 
-CMD ["npx", "tsx", "src/index.ts"]
+# Start server
+CMD ["node", "index.js"]
